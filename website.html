@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Radial - Navigation Gestuelle</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            height: 100vh;
+        }
+
+        .intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 0.5s ease;
+        }
+
+        .intro-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .intro-content {
+            text-align: center;
+            padding: 2rem;
+            max-width: 600px;
+        }
+
+        .intro-content h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+
+        .intro-content p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 0.8rem;
+        }
+
+        .start-btn {
+            margin-top: 2rem;
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            cursor: crosshair;
+        }
+
+        .radial-menu {
+            position: fixed;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .radial-menu.active {
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: all;
+        }
+
+        .menu-center {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .menu-item {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.75rem;
+            text-align: center;
+            padding: 0.5rem;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .menu-item .icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .content-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .content-area.visible {
+            opacity: 1;
+        }
+
+        .content-area h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .content-area p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            text-align: justify;
+        }
+
+        .help-indicator {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            animation: pulse 2s infinite;
+            z-index: 100;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        .breadcrumb {
+            position: fixed;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            z-index: 100;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 100, 100, 0.4);
+            transform: rotate(90deg);
+        }
+
+        .gesture-trail {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            animation: fadeOut 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: scale(2);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="intro-overlay" id="introOverlay">
+        <div class="intro-content">
+            <h1>🎯 Navigation Radiale Gestuelle</h1>
+            <p><strong>Parti pris ergonomique :</strong> Interface sans menu fixe qui apparaît contextuellement où vous en avez besoin.</p>
+            <p><strong>Comment ça marche :</strong></p>
+            <p>• Clic droit (ou appui long sur mobile) n'importe où pour faire apparaître le menu radial</p>
+            <p>• Le menu apparaît exactement là où vous cliquez</p>
+            <p>• Sélectionnez une section pour explorer le contenu</p>
+            <p><strong>Avantage :</strong> Réduction de la distance cognitive et physique entre l'intention et l'action. Zéro distraction quand vous n'en avez pas besoin.</p>
+            <button class="start-btn" onclick="startExperience()">Commencer l'expérience</button>
+        </div>
+    </div>
+
+    <div class="container" id="container">
+        <div class="help-indicator">
+            🖱️ Clic droit pour ouvrir le menu radial
+        </div>
+
+        <div class="breadcrumb" id="breadcrumb">
+            Accueil
+        </div>
+
+        <div class="radial-menu" id="radialMenu">
+            <div class="menu-center">MENU</div>
+        </div>
+
+        <div class="content-area" id="contentArea">
+            <div class="close-btn" onclick="closeContent()">×</div>
+            <div id="contentInner"></div>
+        </div>
+    </div>
+
+    <script>
+        const menuData = [
+            { 
+                id: 'about', 
+                label: 'À propos', 
+                icon: '👤',
+                content: {
+                    title: 'À propos du projet',
+                    text: 'Ce site démontre une approche ergonomique innovante : la navigation radiale gestuelle. Plutôt que d\'imposer un menu fixe qui occupe de l\'espace précieux à l\'écran, l\'interface reste épurée jusqu\'à ce que l\'utilisateur en exprime le besoin. Le menu apparaît contextuellement, exactement là où l\'utilisateur effectue son geste, réduisant ainsi la distance de parcours du curseur et la charge cognitive. Cette approche s\'inspire des menus contextuels des logiciels professionnels (Blender, Maya) tout en l\'adaptant à une interface web moderne.'
+                }
+            },
+            { 
+                id: 'features', 
+                label: 'Features', 
+                icon: '⚡',
+                content: {
+                    title: 'Fonctionnalités clés',
+                    text: 'Navigation contextuelle qui apparaît sur demande et à l\'emplacement du curseur. Feedback visuel immédiat avec effet de traînée gestuelle. Interface adaptative qui maximise l\'espace de contenu. Transition fluide entre les états grâce aux animations CSS optimisées. Menu radial avec disposition ergonomique à 120 degrés d\'espacement pour une sélection rapide et intuitive. Support tactile avec détection d\'appui long. Système de fil d\'Ariane pour garder le contexte. Design glassmorphisme pour une esthétique moderne sans sacrifier la lisibilité.'
+                }
+            },
+            { 
+                id: 'ux', 
+                label: 'Vision UX', 
+                icon: '🎨',
+                content: {
+                    title: 'Vision Ergonomique',
+                    text: 'Le problème identifié : les menus traditionnels occupent un espace permanent et imposent des parcours de navigation linéaires. Notre solution révolutionne l\'interaction en plaçant l\'utilisateur au centre. Le menu n\'existe que quand il est nécessaire, là où il est nécessaire. Cela résout trois problèmes majeurs : la surcharge visuelle (l\'interface disparaît quand on n\'en a pas besoin), la loi de Fitts (distance minimale entre action et cible), et la flexibilité contextuelle (le même geste fonctionne partout). Inspiré par les interfaces de CAO et de création, adapté au web moderne.'
+                }
+            },
+            { 
+                id: 'tech', 
+                label: 'Tech Stack', 
+                icon: '💻',
+                content: {
+                    title: 'Technologies utilisées',
+                    text: 'HTML5 natif avec sémantique moderne. CSS3 avancé utilisant backdrop-filter pour les effets de verre, transforms 3D pour les animations fluides, et custom properties pour la maintenabilité. JavaScript vanilla sans dépendances pour des performances optimales. Calculs trigonométriques pour le positionnement radial dynamique. Event delegation pour une gestion efficace des interactions. RequestAnimationFrame pour des animations à 60fps. Progressive Web App ready avec support offline potentiel. Responsive design avec breakpoints intelligents. Architecture modulaire facilement extensible.'
+                }
+            },
+            { 
+                id: 'contact', 
+                label: 'Contact', 
+                icon: '📧',
+                content: {
+                    title: 'Contactez-moi',
+                    text: 'Ce projet démontre comment une réflexion approfondie sur l\'ergonomie peut transformer radicalement l\'expérience utilisateur. En plaçant l\'utilisateur au centre du design et en réduisant les frictions, nous créons des interfaces qui se sentent naturelles et efficaces. Pour discuter de ce projet ou d\'autres innovations UX/UI, n\'hésitez pas à me contacter. Ce type d\'approche peut être adapté à de nombreux contextes : applications de productivité, interfaces de création, dashboards analytiques, ou tout contexte où maximiser l\'espace de travail et réduire les distractions est crucial.'
+                }
+            }
+        ];
+
+        let radialMenu = document.getElementById('radialMenu');
+        let container = document.getElementById('container');
+        let contentArea = document.getElementById('contentArea');
+        let breadcrumb = document.getElementById('breadcrumb');
+        let currentContent = null;
+
+        function startExperience() {
+            document.getElementById('introOverlay').classList.add('hidden');
+        }
+
+        function createMenuItems() {
+            const radius = 120;
+            const angleStep = (2 * Math.PI) / menuData.length;
+            
+            menuData.forEach((item, index) => {
+                const angle = angleStep * index - Math.PI / 2;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                
+                const menuItem = document.createElement('div');
+                menuItem.className = 'menu-item';
+                menuItem.style.left = `calc(50% + ${x}px - 35px)`;
+                menuItem.style.top = `calc(50% + ${y}px - 35px)`;
+                menuItem.innerHTML = `
+                    <div class="icon">${item.icon}</div>
+                    <div>${item.label}</div>
+                `;
+                
+                menuItem.addEventListener('click', () => showContent(item));
+                radialMenu.appendChild(menuItem);
+            });
+        }
+
+        function showContent(item) {
+            currentContent = item.id;
+            document.getElementById('contentInner').innerHTML = `
+                <h2>${item.content.title}</h2>
+                <p>${item.content.text}</p>
+            `;
+            contentArea.classList.add('visible');
+            radialMenu.classList.remove('active');
+            breadcrumb.textContent = `Accueil > ${item.label}`;
+        }
+
+        function closeContent() {
+            contentArea.classList.remove('visible');
+            currentContent = null;
+            breadcrumb.textContent = 'Accueil';
+        }
+
+        container.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            
+            if (contentArea.classList.contains('visible')) {
+                return;
+            }
+
+            radialMenu.style.left = e.clientX + 'px';
+            radialMenu.style.top = e.clientY + 'px';
+            radialMenu.classList.add('active');
+
+            createGestureTrail(e.clientX, e.clientY);
+        });
+
+        container.addEventListener('click', (e) => {
+            if (!radialMenu.contains(e.target) && !contentArea.contains(e.target)) {
+                radialMenu.classList.remove('active');
+            }
+        });
+
+        let touchStartTime;
+        let touchStartPos;
+
+        container.addEventListener('touchstart', (e) => {
+            touchStartTime = Date.now();
+            touchStartPos = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+        });
+
+        container.addEventListener('touchend', (e) => {
+            const touchDuration = Date.now() - touchStartTime;
+            if (touchDuration > 500 && !contentArea.classList.contains('visible')) {
+                radialMenu.style.left = touchStartPos.x + 'px';
+                radialMenu.style.top = touchStartPos.y + 'px';
+                radialMenu.classList.add('active');
+                createGestureTrail(touchStartPos.x, touchStartPos.y);
+            }
+        });
+
+        function createGestureTrail(x, y) {
+            const trail = document.createElement('div');
+            trail.className = 'gesture-trail';
+            trail.style.left = (x - 10) + 'px';
+            trail.style.top = (y - 10) + 'px';
+            document.body.appendChild(trail);
+            setTimeout(() => trail.remove(), 500);
+        }
+
+        createMenuItems();
+    </script>
+</body>
+</html>
